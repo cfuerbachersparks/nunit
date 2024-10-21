@@ -7,6 +7,7 @@
 //
 // #1 is feasible but doesn't provide much benefit
 // #2 requires infrastructure for dynamic test cases first
+
 using System;
 using NUnit.Framework.Interfaces;
 using NUnit.Framework.Internal;
@@ -21,14 +22,17 @@ namespace NUnit.Framework
     public class RepeatAttribute : PropertyAttribute, IRepeatTest
     {
         private readonly int _count;
+        private readonly bool _repeatAlways;
 
         /// <summary>
         /// Construct a RepeatAttribute
         /// </summary>
         /// <param name="count">The number of times to run the test</param>
-        public RepeatAttribute(int count) : base(count)
+        /// <param name="repeatAlways">Whether the tests should be repeated after a failed test or not</param>
+        public RepeatAttribute(int count, bool repeatAlways = false) : base(count)
         {
             _count = count;
+            _repeatAlways = repeatAlways;
         }
 
         #region IRepeatTest Members
@@ -40,7 +44,7 @@ namespace NUnit.Framework
         /// <returns>The wrapped command</returns>
         public TestCommand Wrap(TestCommand command)
         {
-            return new RepeatedTestCommand(command, _count);
+            return new RepeatedTestCommand(command, _count, _repeatAlways);
         }
 
         #endregion
@@ -53,16 +57,19 @@ namespace NUnit.Framework
         public class RepeatedTestCommand : DelegatingTestCommand
         {
             private readonly int _repeatCount;
+            private readonly bool _repeatAlways;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="RepeatedTestCommand"/> class.
             /// </summary>
             /// <param name="innerCommand">The inner command.</param>
             /// <param name="repeatCount">The number of repetitions</param>
-            public RepeatedTestCommand(TestCommand innerCommand, int repeatCount)
+            /// <param name="repeatAlways">Whether the tests should be repeated after a failed test or not</param>
+            public RepeatedTestCommand(TestCommand innerCommand, int repeatCount, bool repeatAlways)
                 : base(innerCommand)
             {
                 _repeatCount = repeatCount;
+                _repeatAlways = repeatAlways;
             }
 
             /// <summary>
@@ -78,8 +85,7 @@ namespace NUnit.Framework
                 {
                     context.CurrentResult = innerCommand.Execute(context);
 
-                    // TODO: We may want to change this so that all iterations are run
-                    if (context.CurrentResult.ResultState != ResultState.Success)
+                    if (!_repeatAlways && context.CurrentResult.ResultState != ResultState.Success)
                         break;
 
                     context.CurrentRepeatCount++;
