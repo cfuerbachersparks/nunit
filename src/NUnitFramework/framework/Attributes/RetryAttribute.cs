@@ -15,14 +15,17 @@ namespace NUnit.Framework
     public class RetryAttribute : NUnitAttribute, IRepeatTest
     {
         private readonly int _tryCount;
+        private readonly bool _stopOnSuccess;
 
         /// <summary>
         /// Construct a <see cref="RetryAttribute" />
         /// </summary>
         /// <param name="tryCount">The maximum number of times the test should be run if it fails</param>
-        public RetryAttribute(int tryCount)
+        /// <param name="stopOnSuccess">Whether to stop when a test passes or not</param>
+        public RetryAttribute(int tryCount, bool stopOnSuccess = true)
         {
             _tryCount = tryCount;
+            _stopOnSuccess = stopOnSuccess;
         }
 
         #region IRepeatTest Members
@@ -34,7 +37,7 @@ namespace NUnit.Framework
         /// <returns>The wrapped command</returns>
         public TestCommand Wrap(TestCommand command)
         {
-            return new RetryCommand(command, _tryCount);
+            return new RetryCommand(command, _tryCount, _stopOnSuccess);
         }
 
         #endregion
@@ -47,16 +50,19 @@ namespace NUnit.Framework
         public class RetryCommand : DelegatingTestCommand
         {
             private readonly int _tryCount;
+            private readonly bool _stopOnSuccess;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="RetryCommand"/> class.
             /// </summary>
             /// <param name="innerCommand">The inner command.</param>
             /// <param name="tryCount">The maximum number of repetitions</param>
-            public RetryCommand(TestCommand innerCommand, int tryCount)
+            /// <param name="stopOnSuccess">Whether to stop when a test passes or not</param>
+            public RetryCommand(TestCommand innerCommand, int tryCount, bool stopOnSuccess)
                 : base(innerCommand)
             {
                 _tryCount = tryCount;
+                _stopOnSuccess = stopOnSuccess;
             }
 
             /// <summary>
@@ -83,7 +89,7 @@ namespace NUnit.Framework
                         context.CurrentResult.RecordException(ex);
                     }
 
-                    if (context.CurrentResult.ResultState != ResultState.Failure)
+                    if (_stopOnSuccess && context.CurrentResult.ResultState != ResultState.Failure)
                         break;
 
                     // Clear result for retry
