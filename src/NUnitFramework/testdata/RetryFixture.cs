@@ -195,12 +195,153 @@ namespace NUnit.TestData.RepeatingTests
         [Test, Retry(3)]
         public void PassesOnLastRetry()
         {
-            Assert.That(Count, Is.EqualTo(TestContext.CurrentContext.CurrentRepeatCount), "expected CurrentRepeatCount to be incremented only after first attempt");
+            Assert.That(Count, Is.EqualTo(TestContext.CurrentContext.CurrentRepeatCount),
+                "expected CurrentRepeatCount to be incremented only after first attempt");
             if (Count < 2) // second Repeat is 3rd Retry (i.e. end of attempts)
             {
                 Count++;
                 Assert.Fail("forced failure so we will use maximum number of Retries for PassesOnLastRetry");
             }
+        }
+    }
+
+    public class RetryWithoutStopSucceedsOnFirstTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void SucceedsEveryTime()
+        {
+            Count++;
+            Assert.Pass();
+        }
+    }
+
+    public class RetryWithoutStopFailsEveryTimeFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void FailsEveryTime()
+        {
+            Count++;
+            Assert.Fail();
+        }
+    }
+
+    public class RetryWithoutStopSucceedsOnSecondTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void SucceedsOnSecondTry()
+        {
+            Count++;
+
+            if (Count < 2)
+                Assert.Fail();
+        }
+    }
+
+    public class RetryWithoutStopSucceedsOnThirdTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void SucceedsOnThirdTry()
+        {
+            Count++;
+
+            if (Count < 3)
+                Assert.Fail();
+        }
+    }
+
+    public class RetryWithoutStopWithIgnoreAttributeFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false), Ignore("Ignore this test")]
+        public void RepeatShouldIgnore()
+        {
+            Assert.Fail("Ignored test executed");
+        }
+    }
+
+    public class RetryWithoutStopIgnoredOnFirstTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void Test()
+        {
+            Count++;
+            Assert.Ignore("Ignoring");
+        }
+    }
+
+    public class RetryWithoutStopIgnoredOnSecondTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void Test()
+        {
+            Count++;
+
+            if (Count < 2)
+                Assert.Fail("Failed");
+
+            Assert.Ignore("Ignoring");
+        }
+    }
+
+    public class RetryWithoutStopIgnoredOnThirdTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void Test()
+        {
+            Count++;
+
+            if (Count < 3)
+                Assert.Fail("Failed");
+
+            Assert.Ignore("Ignoring");
+        }
+    }
+
+    public class RetryWithoutStopErrorOnFirstTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void Test()
+        {
+            Count++;
+            throw new Exception("Deliberate Exception");
+        }
+    }
+
+    public class RetryWithoutStopErrorOnSecondTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void Test()
+        {
+            Count++;
+
+            if (Count < 2)
+                Assert.Fail("Failed");
+
+            throw new Exception("Deliberate Exception");
+        }
+    }
+
+    public class RetryWithoutStopErrorOnThirdTryFixture : RepeatingTestsFixtureBase
+    {
+        [Test, Retry(3, false)]
+        public void Test()
+        {
+            Count++;
+
+            if (Count < 3)
+                Assert.Fail("Failed");
+
+            throw new Exception("Deliberate Exception");
+        }
+    }
+
+    public class RetryWithoutStopTestCaseFixture : RepeatingTestsFixtureBase
+    {
+        [Retry(3, false)]
+        [TestCase(0)]
+        public void FailsEveryTime(int unused)
+        {
+            Count++;
+            Assert.Fail();
         }
     }
 }
